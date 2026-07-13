@@ -20,28 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   app.appendChild(authScreen);
 
-  // Экран отпечатка
-  const lockScreen = document.createElement('div');
-  lockScreen.id = 'lock-screen';
-  lockScreen.style.display = 'none';
-  lockScreen.innerHTML = `
-    <div class="auth-container">
-      <div class="auth-card">
-        <div class="auth-logo" id="lock-icon">👆</div>
-        <h2>Разблокируйте</h2>
-        <p style="color:var(--text-secondary); margin-bottom:8px;" id="lock-user-email"></p>
-        <p id="lock-status" style="color:var(--text-secondary); margin-bottom:24px; font-size:14px;">Приложите палец к сканеру</p>
-        <div class="fingerprint-ring" id="fingerprint-ring">
-          <div class="fingerprint-inner">👆</div>
-        </div>
-        <button id="retry-biometric-btn" class="btn-primary" style="margin-top:24px; display:none;">Повторить</button>
-        <button id="use-pin-btn" class="btn-secondary" style="margin-top:12px;">🔢 Войти по PIN-коду</button>
-        <button id="lock-logout-btn" style="background:none; border:none; color:var(--text-secondary); margin-top:16px; cursor:pointer; font-size:14px;">Выйти из аккаунта</button>
-      </div>
-    </div>
-  `;
-  app.appendChild(lockScreen);
-
   // Экран PIN-кода
   const pinScreen = document.createElement('div');
   pinScreen.id = 'pin-screen';
@@ -49,8 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
   pinScreen.innerHTML = `
     <div class="auth-container">
       <div class="auth-card">
-        <h2>PIN-код</h2>
-        <p id="pin-message" style="color:var(--text-secondary); margin-bottom:16px; font-size:14px;">Введите PIN-код</p>
+        <div class="auth-logo">🔒</div>
+        <h2>Введите PIN-код</h2>
+        <p style="color:var(--text-secondary); margin-bottom:8px;" id="pin-user-email"></p>
         <div class="pin-dots" id="pin-dots">
           <div class="pin-dot"></div>
           <div class="pin-dot"></div>
@@ -72,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="pin-key">0</button>
           <button class="pin-key pin-delete">⌫</button>
         </div>
-        <button id="pin-back-btn" class="btn-secondary" style="margin-top:12px;">Назад</button>
+        <button id="pin-logout-btn" style="background:none; border:none; color:var(--text-secondary); margin-top:20px; cursor:pointer; font-size:14px;">Выйти из аккаунта</button>
       </div>
     </div>
   `;
@@ -133,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   app.appendChild(mainScreen);
 
-  // Настройки (модалка)
+  // Настройки
   const settingsModalEl = document.createElement('div');
   settingsModalEl.id = 'settings-modal';
   settingsModalEl.className = 'modal';
@@ -146,20 +125,15 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   app.appendChild(settingsModalEl);
 
-  // ==================== ЭЛЕМЕНТЫ ====================
+  // Элементы
   const emailInput = document.getElementById('auth-email');
   const passInput = document.getElementById('auth-password');
   const loginBtn = document.getElementById('auth-login-btn');
   const registerBtn = document.getElementById('auth-register-btn');
   const authError = document.getElementById('auth-error');
   const logoutBtn = document.getElementById('logout-btn');
-  const lockLogoutBtn = document.getElementById('lock-logout-btn');
-  const lockUserEmail = document.getElementById('lock-user-email');
-  const lockStatus = document.getElementById('lock-status');
-  const lockIcon = document.getElementById('lock-icon');
-  const retryBiometricBtn = document.getElementById('retry-biometric-btn');
-  const fingerprintRing = document.getElementById('fingerprint-ring');
-  const usePinBtn = document.getElementById('use-pin-btn');
+  const pinLogoutBtn = document.getElementById('pin-logout-btn');
+  const pinUserEmail = document.getElementById('pin-user-email');
   const settingsBtn = document.getElementById('settings-btn');
   const settingsModal = document.getElementById('settings-modal');
   const changePinOpenBtn = document.getElementById('change-pin-open-btn');
@@ -170,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   emailInput.value = savedEmail;
 
-  // ==================== ФУНКЦИИ ====================
   function showError(msg) {
     authError.textContent = msg;
     authError.style.display = 'block';
@@ -187,20 +160,19 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('session_email');
   }
 
-  // ==================== PIN-КЛАВИАТУРА (разблокировка) ====================
-  let unlockPinInput = '';
+  // ==================== PIN-КЛАВИАТУРА ====================
+  let pinInput = '';
   const pinDots = document.getElementById('pin-dots');
-  const pinMessage = document.getElementById('pin-message');
   const pinErrorMsg = document.getElementById('pin-error-msg');
 
-  function updateUnlockDots() {
+  function updateDots() {
     const dots = pinDots.querySelectorAll('.pin-dot');
-    dots.forEach((d, i) => d.classList.toggle('filled', i < unlockPinInput.length));
+    dots.forEach((d, i) => d.classList.toggle('filled', i < pinInput.length));
   }
 
-  function resetUnlockPin() {
-    unlockPinInput = '';
-    updateUnlockDots();
+  function resetPin() {
+    pinInput = '';
+    updateDots();
     pinErrorMsg.style.display = 'none';
   }
 
@@ -208,17 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
     key.addEventListener('click', () => {
       if (key.classList.contains('pin-empty')) return;
       if (key.classList.contains('pin-delete')) {
-        unlockPinInput = unlockPinInput.slice(0, -1);
-        updateUnlockDots();
+        pinInput = pinInput.slice(0, -1);
+        updateDots();
         pinErrorMsg.style.display = 'none';
         return;
       }
-      if (unlockPinInput.length < 4) {
-        unlockPinInput += key.textContent;
-        updateUnlockDots();
-        if (unlockPinInput.length === 4) {
+      if (pinInput.length < 4) {
+        pinInput += key.textContent;
+        updateDots();
+        if (pinInput.length === 4) {
           const storedPin = localStorage.getItem('user_pin') || '0000';
-          if (unlockPinInput === storedPin) {
+          if (pinInput === storedPin) {
             pinScreen.style.display = 'none';
             unlockApp();
           } else {
@@ -227,18 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             pinDots.style.animation = 'shake 0.4s ease';
             setTimeout(() => {
               pinDots.style.animation = '';
-              resetUnlockPin();
+              resetPin();
             }, 400);
           }
         }
       }
     });
-  });
-
-  document.getElementById('pin-back-btn').addEventListener('click', () => {
-    pinScreen.style.display = 'none';
-    lockScreen.style.display = 'flex';
-    resetUnlockPin();
   });
 
   // ==================== СМЕНА PIN ====================
@@ -250,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const changePinMessage = document.getElementById('change-pin-message');
   const changePinError = document.getElementById('change-pin-error');
 
-  function updateChangePinDots(val) {
+  function updateChangeDots(val) {
     const dots = changePinDots.querySelectorAll('.pin-dot');
     dots.forEach((d, i) => d.classList.toggle('filled', i < val.length));
   }
@@ -259,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     newPinStep1 = '';
     newPinStep2 = '';
     isSettingNewPin = false;
-    updateChangePinDots('');
+    updateChangeDots('');
     changePinError.style.display = 'none';
     changePinTitle.textContent = 'Создайте PIN-код';
     changePinMessage.textContent = 'Придумайте 4 цифры';
@@ -271,10 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (key.classList.contains('pin-delete')) {
         if (isSettingNewPin) {
           newPinStep2 = newPinStep2.slice(0, -1);
-          updateChangePinDots(newPinStep2);
+          updateChangeDots(newPinStep2);
         } else {
           newPinStep1 = newPinStep1.slice(0, -1);
-          updateChangePinDots(newPinStep1);
+          updateChangeDots(newPinStep1);
         }
         changePinError.style.display = 'none';
         return;
@@ -283,19 +249,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isSettingNewPin) {
         if (newPinStep1.length < 4) {
           newPinStep1 += key.textContent;
-          updateChangePinDots(newPinStep1);
+          updateChangeDots(newPinStep1);
           if (newPinStep1.length === 4) {
             isSettingNewPin = true;
             changePinTitle.textContent = 'Повторите PIN-код';
             changePinMessage.textContent = 'Введите те же 4 цифры';
-            updateChangePinDots('');
+            updateChangeDots('');
             changePinError.style.display = 'none';
           }
         }
       } else {
         if (newPinStep2.length < 4) {
           newPinStep2 += key.textContent;
-          updateChangePinDots(newPinStep2);
+          updateChangeDots(newPinStep2);
           if (newPinStep2.length === 4) {
             if (newPinStep1 === newPinStep2) {
               localStorage.setItem('user_pin', newPinStep1);
@@ -312,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
               setTimeout(() => {
                 changePinDots.style.animation = '';
                 newPinStep2 = '';
-                updateChangePinDots('');
+                updateChangeDots('');
               }, 400);
             }
           }
@@ -345,21 +311,20 @@ document.addEventListener('DOMContentLoaded', () => {
     changePinScreen.style.display = 'flex';
   });
 
-  // ==================== БИОМЕТРИЯ ====================
-  function showLockScreen() {
+  // ==================== ЭКРАНЫ ====================
+  function showPinScreen() {
     const email = localStorage.getItem('session_email') || '';
-    lockUserEmail.textContent = email;
+    pinUserEmail.textContent = email;
     authScreen.style.display = 'none';
     mainScreen.style.display = 'none';
-    pinScreen.style.display = 'none';
-    lockScreen.style.display = 'flex';
-    tryBiometric();
+    pinScreen.style.display = 'flex';
+    resetPin();
   }
 
   function unlockApp() {
-    lockScreen.style.display = 'none';
     pinScreen.style.display = 'none';
     mainScreen.style.display = 'block';
+    resetPin();
     if (!initialized) {
       initialized = true;
       initNavigation();
@@ -369,52 +334,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function tryBiometric() {
-    lockIcon.textContent = '👆';
-    lockStatus.textContent = 'Приложите палец к сканеру';
-    retryBiometricBtn.style.display = 'none';
-    fingerprintRing.classList.remove('success', 'error');
-
-    try {
-      const credential = await navigator.credentials.get({
-        publicKey: {
-          challenge: new Uint8Array(32),
-          rpId: window.location.hostname,
-          allowCredentials: [],
-          userVerification: 'required',
-          timeout: 60000
-        }
-      });
-      if (credential) {
-        lockIcon.textContent = '✅';
-        lockStatus.textContent = 'Доступ разрешён';
-        fingerprintRing.classList.add('success');
-        setTimeout(unlockApp, 500);
-      }
-    } catch (err) {
-      console.log('Биометрия:', err.message);
-      lockIcon.textContent = '❌';
-      lockStatus.textContent = 'Не удалось';
-      fingerprintRing.classList.add('error');
-      retryBiometricBtn.style.display = 'block';
-    }
-  }
-
-  retryBiometricBtn.addEventListener('click', () => tryBiometric());
-  fingerprintRing.addEventListener('click', () => tryBiometric());
-
-  usePinBtn.addEventListener('click', () => {
-    lockScreen.style.display = 'none';
-    pinScreen.style.display = 'flex';
-    resetUnlockPin();
-    pinMessage.textContent = 'Введите PIN-код';
-  });
-
   // ==================== АВТОРИЗАЦИЯ ====================
-  lockLogoutBtn.addEventListener('click', async () => {
+  pinLogoutBtn.addEventListener('click', async () => {
     clearSession();
     await auth.signOut();
-    lockScreen.style.display = 'none';
+    pinScreen.style.display = 'none';
     authScreen.style.display = 'flex';
   });
 
@@ -453,10 +377,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   auth.onAuthStateChanged(user => {
     if (user) {
-      showLockScreen();
+      showPinScreen();
     } else {
       authScreen.style.display = 'flex';
-      lockScreen.style.display = 'none';
       pinScreen.style.display = 'none';
       changePinScreen.style.display = 'none';
       mainScreen.style.display = 'none';
