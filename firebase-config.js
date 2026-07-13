@@ -19,3 +19,10 @@ db.enablePersistence({ synchronizeTabs: true })
       console.log('Браузер не поддерживает оффлайн');
     }
   });
+
+// Разогрев Firestore при входе
+auth.onAuthStateChanged(user => {
+  if (user) {
+    db.collection('users').doc(user.uid).get().catch(() => {});
+  }
+});
