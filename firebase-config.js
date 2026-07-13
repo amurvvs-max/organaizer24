@@ -19,6 +19,3 @@ db.enablePersistence({ synchronizeTabs: true })
       console.log('Браузер не поддерживает оффлайн');
     }
   });
-
-auth.signInAnonymously()
-  .catch(err => console.error('Ошибка входа:', err));
