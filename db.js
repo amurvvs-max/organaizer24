@@ -1,6 +1,3 @@
-// Вспомогательные функции для работы с Firestore
-
-// Получить ID текущего пользователя
 function getUserId() {
   return new Promise((resolve) => {
     auth.onAuthStateChanged(user => {
