@@ -134,17 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
   app.appendChild(mainScreen);
 
   // Настройки (модалка)
-  const settingsModal = document.createElement('div');
-  settingsModal.id = 'settings-modal';
-  settingsModal.className = 'modal';
-  settingsModal.innerHTML = `
+  const settingsModalEl = document.createElement('div');
+  settingsModalEl.id = 'settings-modal';
+  settingsModalEl.className = 'modal';
+  settingsModalEl.innerHTML = `
     <div class="modal-content">
       <h3>Настройки</h3>
       <button id="change-pin-open-btn" class="btn-secondary" style="width:100%; margin-bottom:8px;">🔢 Сменить PIN-код</button>
       <button id="settings-close-btn" class="btn-primary" style="width:100%;">Закрыть</button>
     </div>
   `;
-  app.appendChild(settingsModal);
+  app.appendChild(settingsModalEl);
 
   // ==================== ЭЛЕМЕНТЫ ====================
   const emailInput = document.getElementById('auth-email');
@@ -167,7 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let initialized = false;
   let savedEmail = localStorage.getItem('remembered_email') || '';
-  let defaultPin = localStorage.getItem('user_pin') || '0000';
 
   emailInput.value = savedEmail;
 
@@ -300,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (newPinStep2.length === 4) {
             if (newPinStep1 === newPinStep2) {
               localStorage.setItem('user_pin', newPinStep1);
-              defaultPin = newPinStep1;
               changePinTitle.textContent = '✅ Готово!';
               changePinMessage.textContent = 'PIN-код обновлён';
               setTimeout(() => {
