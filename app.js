@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   mainScreen.innerHTML = `
     <header>
       <h1>Мой Органайзер</h1>
-      <button id="logout-btn" style="position:absolute; right:16px; top:14px; background:none; border:none; color:#fff; font-size:14px; cursor:pointer;">Выйти</button>
+      <button id="logout-btn">Выйти</button>
     </header>
     <main>
       <div id="savings-page" class="page"></div>
@@ -45,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const authError = document.getElementById('auth-error');
   const logoutBtn = document.getElementById('logout-btn');
 
-  // Показать ошибку
+  let initialized = false; // флаг, чтобы не дублировать инициализацию
+
   function showError(msg) {
     authError.textContent = msg;
     authError.style.display = 'block';
@@ -68,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('Пользователь не найден');
       } else if (err.code === 'auth/wrong-password') {
         showError('Неверный пароль');
+      } else if (err.code === 'auth/invalid-email') {
+        showError('Неверный email');
       } else {
         showError(err.message);
       }
@@ -94,6 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
         showError('Этот email уже используется');
+      } else if (err.code === 'auth/invalid-email') {
+        showError('Неверный email');
       } else {
         showError(err.message);
       }
@@ -115,16 +120,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (user) {
       authScreen.style.display = 'none';
       mainScreen.style.display = 'block';
-      initNavigation();
-      initSavings();
-      initCar();
-      initNotes();
+
+      if (!initialized) {
+        initialized = true;
+        initNavigation();
+        initSavings();
+        initCar();
+        initNotes();
+      }
     } else {
       authScreen.style.display = 'flex';
       mainScreen.style.display = 'none';
       emailInput.value = '';
       passInput.value = '';
       authError.style.display = 'none';
+      initialized = false;
     }
   });
 });
