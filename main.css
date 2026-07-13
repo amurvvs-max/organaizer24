@@ -271,7 +271,7 @@ main {
   background: rgba(255,255,255,0.08);
 }
 
-/* --- Карточки --- */
+/* --- Единый стиль карточек --- */
 .goal-card,
 .note-card,
 .car-card {
@@ -291,11 +291,12 @@ main {
 }
 
 .goal-card:active,
-.note-card:active {
+.note-card:active,
+.car-card:active {
   transform: scale(0.98);
 }
 
-/* --- Копилка --- */
+/* --- Контейнеры страниц --- */
 .savings-container,
 .car-container,
 .notes-container {
@@ -327,8 +328,10 @@ main {
   opacity: 0.7;
 }
 
+/* --- Заголовки карточек --- */
 .goal-header,
-.note-header {
+.note-header,
+.car-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -336,13 +339,21 @@ main {
 }
 
 .goal-header h3,
-.note-header h3 {
+.note-header h3,
+.car-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #fff;
 }
 
+.car-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* --- Прогресс-бар (копилка) --- */
 .goal-progress {
   display: flex;
   align-items: center;
@@ -388,7 +399,9 @@ main {
   margin: 6px 0 14px;
 }
 
-.goal-buttons {
+/* --- Кнопки внутри карточек --- */
+.goal-buttons,
+.car-buttons {
   display: flex;
   gap: 8px;
   margin-top: 14px;
@@ -405,6 +418,7 @@ main {
   font-weight: 500;
   color: var(--text);
   transition: all 0.2s ease;
+  text-align: center;
 }
 
 .btn-add-money:active {
@@ -412,43 +426,93 @@ main {
   background: rgba(108,92,231,0.1);
 }
 
-.deposits-history {
+/* --- История (копилка и авто) --- */
+.deposits-history,
+.oil-history {
   margin: 14px 0;
   font-size: 13px;
 }
 
-.deposits-history summary {
+.deposits-history summary,
+.oil-history summary {
   cursor: pointer;
   color: var(--text-secondary);
   margin-bottom: 10px;
   font-weight: 500;
 }
 
-.deposits-history ul {
+.deposits-history ul,
+.oil-history ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.deposits-history li {
+.deposits-history li,
+.oil-history li {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
   font-weight: 500;
+  font-size: 13px;
 }
 
-.deposits-history li span:first-child {
+.deposits-history li span:first-child,
+.oil-history li span:first-child {
   color: var(--success);
 }
 
-.deposit-date {
+.deposit-date,
+.oil-date {
   color: var(--text-secondary);
   font-weight: 400;
   font-size: 12px;
 }
 
+/* --- Блок с инфо о замене масла --- */
+.oil-info-block {
+  margin-top: 14px;
+  padding: 14px;
+  background: var(--surface-light);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.oil-info-block p {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.oil-info-block .oil-next {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.oil-info-block .oil-next.ok {
+  color: var(--success);
+}
+
+.oil-info-block .oil-next.warn {
+  color: var(--danger);
+}
+
+/* --- Заметки --- */
+.note-preview {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.note-date {
+  color: var(--text-secondary);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* --- Кнопка-иконка --- */
 .btn-icon {
   background: none;
   border: none;
@@ -464,7 +528,7 @@ main {
   transform: scale(1.2);
 }
 
-/* Быстрые кнопки пополнения */
+/* --- Быстрые кнопки пополнения --- */
 .quick-add-buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -490,22 +554,9 @@ main {
   color: var(--primary-light);
 }
 
-/* --- Заметки --- */
-.note-preview {
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 10px;
-}
-
-.note-date {
-  color: var(--text-secondary);
-  font-size: 12px;
-  opacity: 0.7;
-}
-
 /* --- Авторизация --- */
-#auth-screen {
+#auth-screen,
+#lock-screen {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -528,6 +579,12 @@ main {
   box-shadow: var(--shadow);
   text-align: center;
   animation: cardAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-logo {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: float 3s ease-in-out infinite;
 }
 
 .auth-card h2 {
@@ -606,6 +663,15 @@ main {
   background: rgba(255,118,117,0.15);
   color: var(--danger);
   border-color: var(--danger);
+}
+
+#lock-logout-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  margin-top: 16px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 /* --- Скроллбар --- */
