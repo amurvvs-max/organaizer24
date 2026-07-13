@@ -3,15 +3,10 @@ function initCar() {
   
   container.innerHTML = `
     <div class="car-container">
-      <div id="car-content">
-        <div class="empty-state">
-          <div class="empty-icon">🚗</div>
-          <p>Нет автомобилей</p>
-          <button id="add-car-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Добавить авто</button>
-        </div>
-      </div>
+      <div id="car-content"></div>
+      
+      <button id="add-car-btn" class="fab">+</button>
 
-      <!-- Модалка: добавить авто -->
       <div id="car-add-modal" class="modal">
         <div class="modal-content">
           <h3>Новый автомобиль</h3>
@@ -25,7 +20,6 @@ function initCar() {
         </div>
       </div>
 
-      <!-- Модалка: замена масла -->
       <div id="oil-modal" class="modal">
         <div class="modal-content">
           <h3>Замена масла</h3>
@@ -45,15 +39,17 @@ function initCar() {
   let currentCarId = null;
   let cars = [];
 
-  // === Добавление авто ===
-  const carAddModal = document.getElementById('car-add-modal');
-  
-  document.addEventListener('click', (e) => {
-    if (e.target.id === 'add-car-btn') {
-      carAddModal.classList.add('active');
-    }
+  // Кнопка +
+  document.getElementById('add-car-btn').addEventListener('click', () => {
+    document.getElementById('car-brand').value = '';
+    document.getElementById('car-mileage').value = '';
+    document.getElementById('car-number').value = '';
+    document.getElementById('car-add-modal').classList.add('active');
   });
 
+  // Добавление авто
+  const carAddModal = document.getElementById('car-add-modal');
+  
   document.getElementById('car-add-cancel').addEventListener('click', () => {
     carAddModal.classList.remove('active');
   });
@@ -80,13 +76,10 @@ function initCar() {
     });
 
     carAddModal.classList.remove('active');
-    document.getElementById('car-brand').value = '';
-    document.getElementById('car-mileage').value = '';
-    document.getElementById('car-number').value = '';
     loadCars();
   });
 
-  // === Замена масла ===
+  // Замена масла
   const oilModal = document.getElementById('oil-modal');
 
   document.getElementById('oil-cancel').addEventListener('click', () => {
@@ -118,7 +111,6 @@ function initCar() {
         note: oilNote
       });
 
-      // Сортируем по дате (свежие сверху)
       oilHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       await updateCar(currentCarId, {
@@ -135,7 +127,7 @@ function initCar() {
     loadCars();
   });
 
-  // === Загрузка списка авто ===
+  // Загрузка списка авто
   async function loadCars() {
     cars = await getCars();
     const carContent = document.getElementById('car-content');
@@ -145,7 +137,7 @@ function initCar() {
         <div class="empty-state">
           <div class="empty-icon">🚗</div>
           <p>Нет автомобилей</p>
-          <button id="add-car-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Добавить авто</button>
+          <p class="empty-hint">Нажми + чтобы добавить</p>
         </div>`;
       return;
     }
@@ -223,6 +215,8 @@ function initCar() {
         const car = cars.find(c => c.id === currentCarId);
         document.getElementById('oil-mileage').value = car.mileage;
         document.getElementById('oil-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('oil-type').value = '';
+        document.getElementById('oil-note').value = '';
         oilModal.classList.add('active');
       });
     });
