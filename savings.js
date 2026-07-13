@@ -3,13 +3,9 @@ function initSavings() {
   
   container.innerHTML = `
     <div class="savings-container">
-      <div id="goals-list">
-        <div class="empty-state">
-          <div class="empty-icon">🐷</div>
-          <p>Нет целей накоплений</p>
-          <button id="open-goal-modal-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Создать цель</button>
-        </div>
-      </div>
+      <div id="goals-list"></div>
+      
+      <button id="open-goal-modal-btn" class="fab">+</button>
 
       <div id="goal-modal" class="modal">
         <div class="modal-content">
@@ -45,12 +41,13 @@ function initSavings() {
   const goalModal = document.getElementById('goal-modal');
   const depositModal = document.getElementById('deposit-modal');
   let activeGoalId = null;
+  let isWithdraw = false;
 
   // Открыть модалку создания цели
-  document.addEventListener('click', (e) => {
-    if (e.target.id === 'open-goal-modal-btn') {
-      goalModal.classList.add('active');
-    }
+  document.getElementById('open-goal-modal-btn').addEventListener('click', () => {
+    document.getElementById('goal-name').value = '';
+    document.getElementById('goal-target').value = '';
+    goalModal.classList.add('active');
   });
 
   // Закрыть модалку цели
@@ -80,8 +77,6 @@ function initSavings() {
     });
 
     goalModal.classList.remove('active');
-    document.getElementById('goal-name').value = '';
-    document.getElementById('goal-target').value = '';
     loadGoals();
   });
 
@@ -101,7 +96,7 @@ function initSavings() {
     });
   });
 
-  // Сохранить пополнение
+  // Сохранить пополнение/убавление
   document.getElementById('deposit-save').addEventListener('click', async () => {
     const amount = parseInt(document.getElementById('deposit-amount').value);
     
@@ -114,20 +109,29 @@ function initSavings() {
     const goal = goals.find(g => g.id === activeGoalId);
     
     if (goal) {
+      const change = isWithdraw ? -amount : amount;
+      const newCurrent = (goal.current || 0) + change;
+      
+      if (newCurrent < 0) {
+        alert('Нельзя убавить больше, чем накоплено');
+        return;
+      }
+
       const deposits = goal.deposits || [];
       deposits.push({
-        amount: amount,
+        amount: change,
         date: new Date().toISOString()
       });
 
       await updateSavingGoal(activeGoalId, {
-        current: (goal.current || 0) + amount,
+        current: newCurrent,
         deposits: deposits
       });
     }
 
     depositModal.classList.remove('active');
     document.getElementById('deposit-amount').value = '';
+    isWithdraw = false;
     loadGoals();
   });
 
@@ -141,7 +145,7 @@ function initSavings() {
         <div class="empty-state">
           <div class="empty-icon">🐷</div>
           <p>Нет целей накоплений</p>
-          <button id="open-goal-modal-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Создать цель</button>
+          <p class="empty-hint">Нажми + чтобы создать первую</p>
         </div>`;
       return;
     }
@@ -177,7 +181,7 @@ function initSavings() {
               <ul>
                 ${goal.deposits.slice(-5).reverse().map(d => `
                   <li>
-                    <span>+${formatMoney(d.amount)} ₽</span>
+                    <span>${d.amount > 0 ? '+' : ''}${formatMoney(d.amount)} ₽</span>
                     <span class="deposit-date">${formatDate(d.date)}</span>
                   </li>
                 `).join('')}
@@ -207,6 +211,7 @@ function initSavings() {
     document.querySelectorAll('.deposit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         activeGoalId = btn.dataset.id;
+        isWithdraw = false;
         document.getElementById('deposit-amount').value = '';
         document.querySelector('#deposit-modal h3').textContent = 'Пополнить копилку';
         document.getElementById('deposit-save').textContent = 'Пополнить';
@@ -218,6 +223,7 @@ function initSavings() {
     document.querySelectorAll('.withdraw-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         activeGoalId = btn.dataset.id;
+        isWithdraw = true;
         document.getElementById('deposit-amount').value = '';
         document.querySelector('#deposit-modal h3').textContent = 'Убавить из копилки';
         document.getElementById('deposit-save').textContent = 'Убавить';
@@ -226,51 +232,13 @@ function initSavings() {
     });
   }
 
-  // Переопределяем сохранение с учётом убавления
-  document.getElementById('deposit-save').addEventListener('click', async () => {
-    const amount = parseInt(document.getElementById('deposit-amount').value);
-    const isWithdraw = document.getElementById('deposit-save').textContent === 'Убавить';
-    
-    if (!amount || amount <= 0) {
-      alert('Введите сумму');
-      return;
-    }
-
-    const goals = await getSavings();
-    const goal = goals.find(g => g.id === activeGoalId);
-    
-    if (goal) {
-      const change = isWithdraw ? -amount : amount;
-      const newCurrent = (goal.current || 0) + change;
-      
-      if (newCurrent < 0) {
-        alert('Нельзя убавить больше, чем накоплено');
-        return;
-      }
-
-      const deposits = goal.deposits || [];
-      deposits.push({
-        amount: change,
-        date: new Date().toISOString()
-      });
-
-      await updateSavingGoal(activeGoalId, {
-        current: newCurrent,
-        deposits: deposits
-      });
-    }
-
-    depositModal.classList.remove('active');
-    document.getElementById('deposit-amount').value = '';
-    loadGoals();
-  }, { once: true }); // Удаляем старый обработчик
-
-  // Начальная загрузка
   loadGoals();
 }
 
 function formatMoney(amount) {
-  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const num = Math.abs(amount);
+  const formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return amount < 0 ? '-' + formatted : formatted;
 }
 
 function formatDate(isoString) {
