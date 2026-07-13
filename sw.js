@@ -1,15 +1,16 @@
-const CACHE_NAME = 'organizer-v1';
+const CACHE_NAME = 'organizer-v2';
+const BASE = '/organaizer24';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/main.css',
-  '/app.js',
-  '/firebase-config.js',
-  '/db.js',
-  '/navigation.js',
-  '/savings.js',
-  '/car.js',
-  '/notes.js'
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/main.css',
+  BASE + '/app.js',
+  BASE + '/firebase-config.js',
+  BASE + '/db.js',
+  BASE + '/navigation.js',
+  BASE + '/savings.js',
+  BASE + '/car.js',
+  BASE + '/notes.js'
 ];
 
 self.addEventListener('install', event => {
