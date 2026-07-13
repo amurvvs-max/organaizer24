@@ -554,6 +554,58 @@ main {
   color: var(--primary-light);
 }
 
+/* --- Кольцо отпечатка --- */
+.fingerprint-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+.fingerprint-ring:active {
+  transform: scale(0.95);
+}
+
+.fingerprint-ring.success {
+  border-color: var(--success);
+  box-shadow: 0 0 24px rgba(0,184,148,0.4);
+  animation: none;
+}
+
+.fingerprint-ring.error {
+  border-color: var(--danger);
+  box-shadow: 0 0 24px rgba(255,118,117,0.4);
+  animation: shake 0.5s ease;
+}
+
+.fingerprint-inner {
+  font-size: 40px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.fingerprint-ring.success .fingerprint-inner,
+.fingerprint-ring.error .fingerprint-inner {
+  animation: none;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108,92,231,0.3); }
+  50% { box-shadow: 0 0 0 16px rgba(108,92,231,0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
 /* --- Авторизация --- */
 #auth-screen,
 #lock-screen {
@@ -669,7 +721,7 @@ main {
   background: none;
   border: none;
   color: var(--text-secondary);
-  margin-top: 16px;
+  margin-top: 20px;
   cursor: pointer;
   font-size: 14px;
 }
