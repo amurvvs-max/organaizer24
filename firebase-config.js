@@ -1,11 +1,11 @@
 // Замени на свои ключи из Firebase Console
 const firebaseConfig = {
-  apiKey: "ВАШ_API_KEY",
-  authDomain: "ВАШ_ПРОЕКТ.firebaseapp.com",
-  projectId: "ВАШ_PROJECT_ID",
-  storageBucket: "ВАШ_ПРОЕКТ.appspot.com",
-  messagingSenderId: "ВАШ_SENDER_ID",
-  appId: "ВАШ_APP_ID"
+  apiKey: "AIzaSyB3aSMUWhzZvbL4b36mFwUiexgv1ozsgdc",
+  authDomain: "myorganaizer24.firebaseapp.com",
+  projectId: "myorganaizer24",
+  storageBucket: "myorganaizer24.firebasestorage.app",
+  messagingSenderId: "460799288547",
+  appId: "1:460799288547:web:f18fefa5a9330702c851d6"
 };
 
 // Инициализация Firebase
