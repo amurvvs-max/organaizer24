@@ -11,7 +11,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Оффлайн-кеширование
 db.enablePersistence({ synchronizeTabs: true })
   .catch(err => {
     if (err.code === 'failed-precondition') {
@@ -21,6 +20,5 @@ db.enablePersistence({ synchronizeTabs: true })
     }
   });
 
-// Анонимный вход
 auth.signInAnonymously()
   .catch(err => console.error('Ошибка входа:', err));
