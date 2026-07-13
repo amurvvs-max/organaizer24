@@ -33,21 +33,67 @@ function initSavings() {
     </div>
   `;
 
-  const goalsList = document.getElementById('goals-list');
-  const addGoalBtn = document.getElementById('add-goal-btn');
-  const modal = document.getElementById('goal-modal');
-  const modalTitle = document.getElementById('modal-title');
-  const goalName = document.getElementById('goal-name');
-  const goalTarget = document.getElementById('goal-target');
-  const goalAmount = document.getElementById('goal-amount');
-  const goalNote = document.getElementById('goal-note');
-  const modalCancel = document.getElementById('modal-cancel');
-  const modalSave = document.getElementById('modal-save');
-  const quickAdd = document.getElementById('quick-add');
-  const customAmount = document.getElementById('custom-amount');
-  const customAddBtn = document.getElementById('custom-add-btn');
+  // Дожидаемся отрисовки DOM
+  setTimeout(() => {
+    const addGoalBtn = document.getElementById('add-goal-btn');
+    const modal = document.getElementById('goal-modal');
+    const modalCancel = document.getElementById('modal-cancel');
 
-  let currentGoalId = null;
+    console.log('addGoalBtn:', addGoalBtn);
+    console.log('modal:', modal);
+
+    if (addGoalBtn) {
+      addGoalBtn.addEventListener('click', () => {
+        console.log('Кнопка + нажата');
+        modal.classList.add('active');
+      });
+    }
+
+    if (modalCancel) {
+      modalCancel.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('active');
+      });
+    }
+
+    // Сохранение цели
+    const modalSave = document.getElementById('modal-save');
+    if (modalSave) {
+      modalSave.addEventListener('click', async () => {
+        const name = document.getElementById('goal-name').value.trim();
+        const target = parseInt(document.getElementById('goal-target').value);
+        const amount = parseInt(document.getElementById('goal-amount').value) || 0;
+
+        if (!name || !target) {
+          alert('Введите название и сумму цели');
+          return;
+        }
+
+        await addSavingGoal({
+          name,
+          target,
+          current: amount,
+          deposits: amount > 0 ? [{
+            amount,
+            date: new Date().toISOString(),
+            note: document.getElementById('goal-note').value.trim()
+          }] : []
+        });
+
+        modal.classList.remove('active');
+        loadGoals();
+      });
+    }
+
+    // Загружаем цели
+    loadGoals();
+  }, 100);
+
   let goals = [];
 
   async function loadGoals() {
@@ -56,6 +102,9 @@ function initSavings() {
   }
 
   function renderGoals() {
+    const goalsList = document.getElementById('goals-list');
+    if (!goalsList) return;
+
     if (goals.length === 0) {
       goalsList.innerHTML = `
         <div class="empty-state">
@@ -71,7 +120,7 @@ function initSavings() {
       const remaining = goal.target - goal.current;
       
       return `
-        <div class="goal-card" data-id="${goal.id}">
+        <div class="goal-card">
           <div class="goal-header">
             <h3>${goal.name}</h3>
             <button class="btn-icon delete-goal" data-id="${goal.id}">🗑️</button>
@@ -105,15 +154,12 @@ function initSavings() {
               </ul>
             </details>
           ` : ''}
-          <button class="btn-add-money" data-id="${goal.id}">💰 Пополнить</button>
+          <button class="btn-add-money quick-deposit" data-id="${goal.id}">💰 Пополнить</button>
         </div>
       `;
     }).join('');
 
-    document.querySelectorAll('.btn-add-money').forEach(btn => {
-      btn.addEventListener('click', () => openQuickAdd(btn.dataset.id));
-    });
-
+    // Удаление цели
     document.querySelectorAll('.delete-goal').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -123,36 +169,38 @@ function initSavings() {
         }
       });
     });
+
+    // Быстрое пополнение
+    document.querySelectorAll('.quick-deposit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const quickAdd = document.getElementById('quick-add');
+        quickAdd.classList.remove('hidden');
+        
+        const customAmount = document.getElementById('custom-amount');
+        customAmount.value = '';
+        customAmount.focus();
+
+        // Обработчики для быстрых кнопок
+        document.querySelectorAll('.quick-add-buttons button').forEach(qbtn => {
+          qbtn.onclick = () => depositToGoal(id, parseInt(qbtn.dataset.amount));
+        });
+
+        document.getElementById('custom-add-btn').onclick = () => {
+          depositToGoal(id, parseInt(customAmount.value));
+        };
+
+        customAmount.onkeypress = (e) => {
+          if (e.key === 'Enter') depositToGoal(id, parseInt(customAmount.value));
+        };
+      });
+    });
   }
 
-  function openNewGoal() {
-    currentGoalId = null;
-    modalTitle.textContent = 'Новая цель';
-    goalName.value = '';
-    goalTarget.value = '';
-    goalAmount.value = '0';
-    goalNote.value = '';
-    goalAmount.parentElement.style.display = 'none';
-    modal.classList.add('active');
-    goalName.focus();
-  }
-
-  function openQuickAdd(goalId) {
-    currentGoalId = goalId;
-    quickAdd.classList.remove('hidden');
-    customAmount.value = '';
-    customAmount.focus();
-  }
-
-  function closeQuickAdd() {
-    quickAdd.classList.add('hidden');
-    currentGoalId = null;
-  }
-
-  async function depositToGoal(amount) {
+  async function depositToGoal(goalId, amount) {
     if (!amount || amount <= 0) return;
     
-    const goal = goals.find(g => g.id === currentGoalId);
+    const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
 
     const deposits = goal.deposits || [];
@@ -162,75 +210,14 @@ function initSavings() {
       note: ''
     });
 
-    await updateSavingGoal(currentGoalId, {
+    await updateSavingGoal(goalId, {
       current: (goal.current || 0) + amount,
       deposits: deposits
     });
 
-    closeQuickAdd();
+    document.getElementById('quick-add').classList.add('hidden');
     loadGoals();
   }
-
-  modalSave.addEventListener('click', async () => {
-    const name = goalName.value.trim();
-    const target = parseInt(goalTarget.value);
-    const amount = parseInt(goalAmount.value) || 0;
-
-    if (!name || !target) {
-      alert('Введите название и сумму цели');
-      return;
-    }
-
-    if (currentGoalId) {
-      if (amount > 0) {
-        await depositToGoal(amount);
-      }
-    } else {
-      await addSavingGoal({
-        name,
-        target,
-        current: amount,
-        deposits: amount > 0 ? [{
-          amount,
-          date: new Date().toISOString(),
-          note: goalNote.value.trim()
-        }] : []
-      });
-    }
-
-    modal.classList.remove('active');
-    loadGoals();
-  });
-
-  modalCancel.addEventListener('click', () => {
-    modal.classList.remove('active');
-  });
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('active');
-  });
-
-  document.querySelectorAll('.quick-add-buttons button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      depositToGoal(parseInt(btn.dataset.amount));
-    });
-  });
-
-  customAddBtn.addEventListener('click', () => {
-    depositToGoal(parseInt(customAmount.value));
-  });
-
-  customAmount.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') depositToGoal(parseInt(customAmount.value));
-  });
-
-  addGoalBtn.addEventListener('click', openNewGoal);
-
-  quickAdd.addEventListener('click', (e) => {
-    if (e.target === quickAdd) closeQuickAdd();
-  });
-
-  loadGoals();
 }
 
 function formatMoney(amount) {
