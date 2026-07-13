@@ -117,7 +117,8 @@ main {
   font-size: 18px;
 }
 
-.modal-content input {
+.modal-content input,
+.modal-content textarea {
   width: 100%;
   padding: 12px;
   border: 1px solid #ddd;
@@ -127,7 +128,8 @@ main {
   font-family: inherit;
 }
 
-.modal-content input:focus {
+.modal-content input:focus,
+.modal-content textarea:focus {
   outline: none;
   border-color: #1a1a2e;
 }
@@ -370,6 +372,48 @@ main {
 
 .car-card {
   margin: 12px 0;
+}
+
+/* --- Заметки --- */
+.notes-container {
+  position: relative;
+  min-height: 100%;
+}
+
+.note-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 12px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.note-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.note-preview {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.note-date {
+  color: #999;
+  font-size: 12px;
+}
+
+.note-card .btn-add-money {
+  margin-top: 8px;
 }
 
 /* --- Авторизация --- */
