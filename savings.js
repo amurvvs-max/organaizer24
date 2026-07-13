@@ -1,15 +1,12 @@
-// Копилка — цели накоплений
 function initSavings() {
   const container = document.getElementById('savings-page');
   
-  // HTML-структура
   container.innerHTML = `
     <div class="savings-container">
       <div id="goals-list"></div>
       <button id="add-goal-btn" class="fab">+</button>
     </div>
 
-    <!-- Модальное окно для добавления/пополнения -->
     <div id="goal-modal" class="modal">
       <div class="modal-content">
         <h3 id="modal-title">Новая цель</h3>
@@ -24,7 +21,6 @@ function initSavings() {
       </div>
     </div>
 
-    <!-- Быстрые кнопки пополнения -->
     <div id="quick-add" class="quick-add hidden">
       <div class="quick-add-buttons">
         <button data-amount="100">+100</button>
@@ -37,7 +33,6 @@ function initSavings() {
     </div>
   `;
 
-  // Элементы
   const goalsList = document.getElementById('goals-list');
   const addGoalBtn = document.getElementById('add-goal-btn');
   const modal = document.getElementById('goal-modal');
@@ -52,16 +47,14 @@ function initSavings() {
   const customAmount = document.getElementById('custom-amount');
   const customAddBtn = document.getElementById('custom-add-btn');
 
-  let currentGoalId = null; // для пополнения существующей цели
+  let currentGoalId = null;
   let goals = [];
 
-  // Загрузка целей
   async function loadGoals() {
     goals = await getSavings();
     renderGoals();
   }
 
-  // Отображение целей
   function renderGoals() {
     if (goals.length === 0) {
       goalsList.innerHTML = `
@@ -117,7 +110,6 @@ function initSavings() {
       `;
     }).join('');
 
-    // Обработчики на карточках
     document.querySelectorAll('.btn-add-money').forEach(btn => {
       btn.addEventListener('click', () => openQuickAdd(btn.dataset.id));
     });
@@ -133,7 +125,6 @@ function initSavings() {
     });
   }
 
-  // Открыть добавление цели
   function openNewGoal() {
     currentGoalId = null;
     modalTitle.textContent = 'Новая цель';
@@ -146,7 +137,6 @@ function initSavings() {
     goalName.focus();
   }
 
-  // Открыть быстрое пополнение
   function openQuickAdd(goalId) {
     currentGoalId = goalId;
     quickAdd.classList.remove('hidden');
@@ -154,13 +144,11 @@ function initSavings() {
     customAmount.focus();
   }
 
-  // Закрыть пополнение
   function closeQuickAdd() {
     quickAdd.classList.add('hidden');
     currentGoalId = null;
   }
 
-  // Пополнение цели
   async function depositToGoal(amount) {
     if (!amount || amount <= 0) return;
     
@@ -183,7 +171,6 @@ function initSavings() {
     loadGoals();
   }
 
-  // Сохранение из модального окна
   modalSave.addEventListener('click', async () => {
     const name = goalName.value.trim();
     const target = parseInt(goalTarget.value);
@@ -195,12 +182,10 @@ function initSavings() {
     }
 
     if (currentGoalId) {
-      // Существующая цель — пополнение
       if (amount > 0) {
         await depositToGoal(amount);
       }
     } else {
-      // Новая цель
       await addSavingGoal({
         name,
         target,
@@ -217,7 +202,6 @@ function initSavings() {
     loadGoals();
   });
 
-  // Закрытие модального окна
   modalCancel.addEventListener('click', () => {
     modal.classList.remove('active');
   });
@@ -226,14 +210,12 @@ function initSavings() {
     if (e.target === modal) modal.classList.remove('active');
   });
 
-  // Кнопки быстрого пополнения
   document.querySelectorAll('.quick-add-buttons button').forEach(btn => {
     btn.addEventListener('click', () => {
       depositToGoal(parseInt(btn.dataset.amount));
     });
   });
 
-  // Своя сумма пополнения
   customAddBtn.addEventListener('click', () => {
     depositToGoal(parseInt(customAmount.value));
   });
@@ -242,19 +224,15 @@ function initSavings() {
     if (e.key === 'Enter') depositToGoal(parseInt(customAmount.value));
   });
 
-  // Открыть новую цель по кнопке +
   addGoalBtn.addEventListener('click', openNewGoal);
 
-  // Закрыть быстрое пополнение по клику вне
   quickAdd.addEventListener('click', (e) => {
     if (e.target === quickAdd) closeQuickAdd();
   });
 
-  // Первая загрузка
   loadGoals();
 }
 
-// Вспомогательные функции
 function formatMoney(amount) {
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
