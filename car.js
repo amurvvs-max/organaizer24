@@ -3,139 +3,230 @@ function initCar() {
   
   container.innerHTML = `
     <div class="car-container">
-      <div id="car-data">
+      <div id="car-content">
         <div class="empty-state">
           <div class="empty-icon">🚗</div>
-          <p>Нет данных об автомобиле</p>
-          <button id="add-car-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Добавить данные</button>
+          <p>Нет автомобилей</p>
+          <button id="add-car-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Добавить авто</button>
         </div>
       </div>
 
-      <div id="car-modal" class="modal">
+      <!-- Модалка: добавить авто -->
+      <div id="car-add-modal" class="modal">
         <div class="modal-content">
-          <h3>Данные автомобиля</h3>
+          <h3>Новый автомобиль</h3>
           <input type="text" id="car-brand" placeholder="Марка и модель">
           <input type="number" id="car-mileage" placeholder="Текущий пробег (км)">
-          <input type="number" id="car-oil-mileage" placeholder="Пробег последней замены масла">
-          <input type="date" id="car-oil-date" placeholder="Дата последней замены">
-          <input type="number" id="car-oil-interval" placeholder="Интервал замены (км)" value="10000">
-          <input type="text" id="car-oil-type" placeholder="Тип масла (например, 5W-30)">
+          <input type="text" id="car-number" placeholder="Госномер (необязательно)">
           <div class="modal-buttons">
-            <button id="car-cancel" class="btn-secondary">Отмена</button>
-            <button id="car-save" class="btn-primary">Сохранить</button>
+            <button id="car-add-cancel" class="btn-secondary">Отмена</button>
+            <button id="car-add-save" class="btn-primary">Сохранить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Модалка: замена масла -->
+      <div id="oil-modal" class="modal">
+        <div class="modal-content">
+          <h3>Замена масла</h3>
+          <input type="number" id="oil-mileage" placeholder="Пробег на момент замены (км)">
+          <input type="date" id="oil-date" placeholder="Дата замены">
+          <input type="text" id="oil-type" placeholder="Масло (например, 5W-30)">
+          <input type="text" id="oil-note" placeholder="Заметка (фильтр, сервис и т.д.)">
+          <div class="modal-buttons">
+            <button id="oil-cancel" class="btn-secondary">Отмена</button>
+            <button id="oil-save" class="btn-primary">Сохранить</button>
           </div>
         </div>
       </div>
     </div>
   `;
 
-  // Кнопка открытия модалки
-  const addCarBtn = document.getElementById('add-car-btn');
-  const modal = document.getElementById('car-modal');
-  const carCancel = document.getElementById('car-cancel');
-  const carSave = document.getElementById('car-save');
+  let currentCarId = null;
+  let cars = [];
 
-  if (addCarBtn) {
-    addCarBtn.addEventListener('click', () => {
-      console.log('Кнопка "Добавить данные" нажата');
-      modal.classList.add('active');
-    });
-  }
-
-  if (carCancel) {
-    carCancel.addEventListener('click', () => {
-      modal.classList.remove('active');
-    });
-  }
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('active');
+  // === Добавление авто ===
+  const carAddModal = document.getElementById('car-add-modal');
+  
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'add-car-btn') {
+      carAddModal.classList.add('active');
+    }
   });
 
-  carSave.addEventListener('click', async () => {
-    const brand = document.getElementById('car-brand').value;
+  document.getElementById('car-add-cancel').addEventListener('click', () => {
+    carAddModal.classList.remove('active');
+  });
+
+  carAddModal.addEventListener('click', (e) => {
+    if (e.target === carAddModal) carAddModal.classList.remove('active');
+  });
+
+  document.getElementById('car-add-save').addEventListener('click', async () => {
+    const brand = document.getElementById('car-brand').value.trim();
     const mileage = parseInt(document.getElementById('car-mileage').value);
-    const oilMileage = parseInt(document.getElementById('car-oil-mileage').value);
-    const oilDate = document.getElementById('car-oil-date').value;
-    const oilInterval = parseInt(document.getElementById('car-oil-interval').value) || 10000;
-    const oilType = document.getElementById('car-oil-type').value;
+    const number = document.getElementById('car-number').value.trim();
 
     if (!brand || !mileage) {
       alert('Введите марку и пробег');
       return;
     }
 
-    await saveCarData({
+    await addCar({
       brand,
       mileage,
-      lastOilChange: {
-        mileage: oilMileage || mileage,
-        date: oilDate || new Date().toISOString().split('T')[0],
-        type: oilType || 'Не указано'
-      },
-      oilInterval,
-      history: []
+      number,
+      oilHistory: []
     });
 
-    modal.classList.remove('active');
-    renderCarData();
+    carAddModal.classList.remove('active');
+    document.getElementById('car-brand').value = '';
+    document.getElementById('car-mileage').value = '';
+    document.getElementById('car-number').value = '';
+    loadCars();
   });
 
-  async function renderCarData() {
-    const data = await getCarData();
-    const carDataDiv = document.getElementById('car-data');
+  // === Замена масла ===
+  const oilModal = document.getElementById('oil-modal');
 
-    if (!data) {
-      carDataDiv.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🚗</div>
-          <p>Нет данных об автомобиле</p>
-          <button id="add-car-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Добавить данные</button>
-        </div>`;
-      document.getElementById('add-car-btn').addEventListener('click', () => {
-        document.getElementById('car-modal').classList.add('active');
-      });
+  document.getElementById('oil-cancel').addEventListener('click', () => {
+    oilModal.classList.remove('active');
+  });
+
+  oilModal.addEventListener('click', (e) => {
+    if (e.target === oilModal) oilModal.classList.remove('active');
+  });
+
+  document.getElementById('oil-save').addEventListener('click', async () => {
+    const oilMileage = parseInt(document.getElementById('oil-mileage').value);
+    const oilDate = document.getElementById('oil-date').value || new Date().toISOString().split('T')[0];
+    const oilType = document.getElementById('oil-type').value.trim() || 'Не указано';
+    const oilNote = document.getElementById('oil-note').value.trim();
+
+    if (!oilMileage) {
+      alert('Введите пробег');
       return;
     }
 
-    const oilChange = data.lastOilChange || {};
-    const kmLeft = data.oilInterval - (data.mileage - oilChange.mileage);
-    const oilDateObj = new Date(oilChange.date);
-    const daysLeft = Math.ceil((oilDateObj.getTime() + data.oilInterval * 86400000 / 30 - Date.now()) / 86400000);
+    const car = cars.find(c => c.id === currentCarId);
+    if (car) {
+      const oilHistory = car.oilHistory || [];
+      oilHistory.push({
+        mileage: oilMileage,
+        date: oilDate,
+        type: oilType,
+        note: oilNote
+      });
 
-    carDataDiv.innerHTML = `
-      <div class="goal-card">
-        <h3>${data.brand}</h3>
-        <p>Пробег: <strong>${formatMoney(data.mileage)} км</strong></p>
-        
-        <div style="margin-top:12px; padding:12px; background:#f9f9f9; border-radius:10px;">
-          <p>🛢️ Последняя замена масла:</p>
-          <p>${oilChange.date} — ${formatMoney(oilChange.mileage)} км</p>
-          <p>Тип масла: ${oilChange.type}</p>
-          <p>Интервал: ${formatMoney(data.oilInterval)} км</p>
-          
-          <div style="margin-top:8px;">
-            ${kmLeft > 0 
-              ? `<p style="color:#4CAF50;">✅ Осталось: ~${formatMoney(kmLeft)} км</p>`
-              : `<p style="color:#f44336;">⚠️ Просрочено на ${formatMoney(Math.abs(kmLeft))} км!</p>`}
-            <p style="font-size:12px; color:#888;">Примерно до: ${new Date(oilDateObj.getTime() + data.oilInterval * 86400000 / 30).toLocaleDateString('ru-RU')}</p>
+      // Сортируем по дате (свежие сверху)
+      oilHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      await updateCar(currentCarId, {
+        oilHistory,
+        mileage: Math.max(car.mileage, oilMileage)
+      });
+    }
+
+    oilModal.classList.remove('active');
+    document.getElementById('oil-mileage').value = '';
+    document.getElementById('oil-date').value = '';
+    document.getElementById('oil-type').value = '';
+    document.getElementById('oil-note').value = '';
+    loadCars();
+  });
+
+  // === Загрузка списка авто ===
+  async function loadCars() {
+    cars = await getCars();
+    const carContent = document.getElementById('car-content');
+
+    if (cars.length === 0) {
+      carContent.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🚗</div>
+          <p>Нет автомобилей</p>
+          <button id="add-car-btn" class="btn-primary" style="margin-top:16px; width:auto; display:inline-block; padding:12px 24px;">➕ Добавить авто</button>
+        </div>`;
+      return;
+    }
+
+    carContent.innerHTML = cars.map(car => {
+      const oilHistory = car.oilHistory || [];
+      const lastOil = oilHistory[0] || null;
+      const nextOilMileage = lastOil ? lastOil.mileage + 10000 : car.mileage + 10000;
+      const kmLeft = nextOilMileage - car.mileage;
+
+      return `
+        <div class="goal-card car-card">
+          <div class="goal-header">
+            <div>
+              <h3>${car.brand}</h3>
+              ${car.number ? `<p style="font-size:12px; color:#888;">${car.number}</p>` : ''}
+            </div>
+            <button class="btn-icon delete-car" data-id="${car.id}">🗑️</button>
           </div>
+
+          <p style="font-size:14px; color:#666;">Пробег: <strong>${formatMoney(car.mileage)} км</strong></p>
+
+          ${lastOil ? `
+            <div style="margin-top:12px; padding:12px; background:#f9f9f9; border-radius:10px;">
+              <p style="font-weight:500;">🛢️ Последняя замена:</p>
+              <p>📅 ${formatDate(lastOil.date)} | 🔧 ${formatMoney(lastOil.mileage)} км</p>
+              <p>🛢️ ${lastOil.type}</p>
+              ${lastOil.note ? `<p style="font-size:12px; color:#888;">📝 ${lastOil.note}</p>` : ''}
+              <p style="margin-top:8px; ${kmLeft > 0 ? 'color:#4CAF50;' : 'color:#f44336;'}">
+                ${kmLeft > 0 
+                  ? `✅ Следующая замена через ~${formatMoney(kmLeft)} км` 
+                  : `⚠️ Замена просрочена на ${formatMoney(Math.abs(kmLeft))} км!`}
+              </p>
+            </div>
+          ` : `
+            <p style="margin-top:12px; color:#f44336;">Нет записей о замене масла</p>
+          `}
+
+          <button class="btn-add-money add-oil-btn" data-id="${car.id}" style="margin-top:12px;">🛢️ Замена масла</button>
+
+          ${oilHistory.length > 1 ? `
+            <details class="deposits-history" style="margin-top:12px;">
+              <summary>История замен (${oilHistory.length})</summary>
+              <ul>
+                ${oilHistory.map(o => `
+                  <li>
+                    <span>📅 ${formatDate(o.date)}</span>
+                    <span>🔧 ${formatMoney(o.mileage)} км</span>
+                    <span>🛢️ ${o.type}</span>
+                    ${o.note ? `<span style="font-size:11px; color:#888; width:100%;">📝 ${o.note}</span>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            </details>
+          ` : ''}
         </div>
+      `;
+    }).join('');
 
-        <button id="edit-car-btn" class="btn-add-money" style="margin-top:12px;">✏️ Редактировать</button>
-      </div>
-    `;
+    // Удаление авто
+    document.querySelectorAll('.delete-car').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (confirm('Удалить автомобиль?')) {
+          await deleteCar(btn.dataset.id);
+          loadCars();
+        }
+      });
+    });
 
-    document.getElementById('edit-car-btn').addEventListener('click', () => {
-      document.getElementById('car-brand').value = data.brand;
-      document.getElementById('car-mileage').value = data.mileage;
-      document.getElementById('car-oil-mileage').value = oilChange.mileage;
-      document.getElementById('car-oil-date').value = oilChange.date;
-      document.getElementById('car-oil-interval').value = data.oilInterval;
-      document.getElementById('car-oil-type').value = oilChange.type;
-      modal.classList.add('active');
+    // Добавление замены масла
+    document.querySelectorAll('.add-oil-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentCarId = btn.dataset.id;
+        const car = cars.find(c => c.id === currentCarId);
+        document.getElementById('oil-mileage').value = car.mileage;
+        document.getElementById('oil-date').value = new Date().toISOString().split('T')[0];
+        oilModal.classList.add('active');
+      });
     });
   }
 
-  renderCarData();
+  loadCars();
 }
