@@ -114,20 +114,20 @@ main {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0,0,0,0.5);
-  z-index: 200;
+  z-index: 999;
   align-items: flex-end;
   justify-content: center;
 }
 
 .modal.active {
-  display: flex;
+  display: flex !important;
 }
 
 .modal-content {
-  background: #fff;
+  background: #ffffff;
   border-radius: 20px 20px 0 0;
   padding: 24px 20px;
   width: 100%;
@@ -140,6 +140,7 @@ main {
 .modal-content h3 {
   margin-bottom: 16px;
   font-size: 18px;
+  color: #333;
 }
 
 .modal-content input,
@@ -151,6 +152,9 @@ main {
   margin-bottom: 12px;
   font-size: 16px;
   font-family: inherit;
+  background: #fff;
+  color: #333;
+  display: block;
 }
 
 .modal-content input:focus,
@@ -215,7 +219,6 @@ main {
   padding: 20px;
   margin: 12px 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  position: relative;
 }
 
 .goal-header {
@@ -284,7 +287,7 @@ main {
   transition: all 0.2s;
 }
 
-.btn-add-money:hover {
+.btn-add-money:active {
   border-color: #4CAF50;
   background: #f1f8e9;
 }
@@ -335,10 +338,9 @@ main {
   font-size: 18px;
   cursor: pointer;
   opacity: 0.5;
-  transition: opacity 0.2s;
 }
 
-.btn-icon:hover {
+.btn-icon:active {
   opacity: 1;
 }
 
@@ -352,8 +354,7 @@ main {
   padding: 16px;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
   border-radius: 20px 20px 0 0;
-  z-index: 100;
-  animation: slideUp 0.3s ease;
+  z-index: 300;
   max-width: 480px;
   margin: 0 auto;
 }
@@ -377,10 +378,9 @@ main {
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s;
 }
 
-.quick-add-buttons button:hover {
+.quick-add-buttons button:active {
   background: #e8f5e9;
   border-color: #4CAF50;
 }
