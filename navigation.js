@@ -1,9 +1,7 @@
-// Нижняя навигация
 function initNavigation() {
   const pages = ['savings', 'car', 'notes'];
   const icons = ['💰', '🚗', '📝'];
 
-  // Показываем вкладку
   function showPage(page) {
     pages.forEach(p => {
       document.getElementById(`${p}-page`).style.display = p === page ? 'block' : 'none';
@@ -11,7 +9,6 @@ function initNavigation() {
     });
   }
 
-  // Создаем меню
   const nav = document.getElementById('bottom-nav');
   pages.forEach((page, i) => {
     const btn = document.createElement('button');
@@ -21,6 +18,5 @@ function initNavigation() {
     nav.appendChild(btn);
   });
 
-  // Стартовая вкладка
   showPage('savings');
 }
