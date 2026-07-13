@@ -1,20 +1,18 @@
-// Замени на свои ключи из Firebase Console
 const firebaseConfig = {
   apiKey: "AIzaSyB3aSMUWhzZvbL4b36mFwUiexgv1ozsgdc",
   authDomain: "myorganaizer24.firebaseapp.com",
   projectId: "myorganaizer24",
-  storageBucket: "myorganaizer24.firebasestorage.app",
-  messagingSenderId: "460799288547",
-  appId: "1:460799288547:web:f18fefa5a9330702c851d6"
+  storageBucket: "myorganaizer24.appspot.com",
+  messagingSenderId: "1096135844588",
+  appId: "1:1096135844588:web:6e2f3a8b4c5d7e9f0a1b2c"
 };
 
-// Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Включаем оффлайн-кеширование
-db.enablePersistence()
+// Оффлайн-кеширование
+db.enablePersistence({ synchronizeTabs: true })
   .catch(err => {
     if (err.code === 'failed-precondition') {
       console.log('Оффлайн-режим: открыто несколько вкладок');
@@ -23,6 +21,6 @@ db.enablePersistence()
     }
   });
 
-// Анонимный вход (без регистрации, но у каждого свои данные)
+// Анонимный вход
 auth.signInAnonymously()
   .catch(err => console.error('Ошибка входа:', err));
