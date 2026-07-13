@@ -7,17 +7,36 @@ document.addEventListener('DOMContentLoaded', () => {
   authScreen.innerHTML = `
     <div class="auth-container">
       <div class="auth-card">
+        <div class="auth-logo">🔐</div>
         <h2>Мой Органайзер</h2>
-        <p style="color:#888; margin-bottom:20px;">Войдите или зарегистрируйтесь</p>
+        <p style="color:var(--text-secondary); margin-bottom:20px;">Войдите в аккаунт</p>
         <input type="email" id="auth-email" placeholder="Email">
         <input type="password" id="auth-password" placeholder="Пароль">
         <button id="auth-login-btn" class="btn-primary">Войти</button>
         <button id="auth-register-btn" class="btn-secondary">Регистрация</button>
-        <p id="auth-error" style="color:#f44336; margin-top:12px; display:none;"></p>
+        <p id="auth-error" style="color:var(--danger); margin-top:12px; display:none;"></p>
       </div>
     </div>
   `;
   app.appendChild(authScreen);
+
+  // Экран блокировки (PIN/отпечаток)
+  const lockScreen = document.createElement('div');
+  lockScreen.id = 'lock-screen';
+  lockScreen.style.display = 'none';
+  lockScreen.innerHTML = `
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-logo">🔒</div>
+        <h2>Разблокируйте</h2>
+        <p style="color:var(--text-secondary); margin-bottom:24px;">Используйте отпечаток или PIN</p>
+        <button id="unlock-biometric-btn" class="btn-primary" style="margin-bottom:10px;">👆 Отпечаток / Face ID</button>
+        <button id="unlock-pin-btn" class="btn-secondary">🔢 Ввести PIN-код</button>
+        <button id="lock-logout-btn" style="background:none; border:none; color:var(--text-secondary); margin-top:16px; cursor:pointer; font-size:14px;">Выйти из аккаунта</button>
+      </div>
+    </div>
+  `;
+  app.appendChild(lockScreen);
 
   // Основной экран (скрыт пока)
   const mainScreen = document.createElement('div');
@@ -37,20 +56,114 @@ document.addEventListener('DOMContentLoaded', () => {
   `;
   app.appendChild(mainScreen);
 
-  // Элементы
+  // Элементы авторизации
   const emailInput = document.getElementById('auth-email');
   const passInput = document.getElementById('auth-password');
   const loginBtn = document.getElementById('auth-login-btn');
   const registerBtn = document.getElementById('auth-register-btn');
   const authError = document.getElementById('auth-error');
   const logoutBtn = document.getElementById('logout-btn');
+  const lockLogoutBtn = document.getElementById('lock-logout-btn');
+  const unlockBiometricBtn = document.getElementById('unlock-biometric-btn');
+  const unlockPinBtn = document.getElementById('unlock-pin-btn');
 
-  let initialized = false; // флаг, чтобы не дублировать инициализацию
+  let initialized = false;
+  let savedEmail = localStorage.getItem('remembered_email') || '';
+
+  // Восстанавливаем email если был сохранён
+  emailInput.value = savedEmail;
 
   function showError(msg) {
     authError.textContent = msg;
     authError.style.display = 'block';
   }
+
+  // Сохраняем сессию
+  function saveSession(email) {
+    localStorage.setItem('remembered_email', email);
+    localStorage.setItem('session_active', 'true');
+    localStorage.setItem('session_email', email);
+  }
+
+  // Очищаем сессию
+  function clearSession() {
+    localStorage.removeItem('session_active');
+    localStorage.removeItem('session_email');
+  }
+
+  // Экран блокировки
+  async function showLockScreen() {
+    authScreen.style.display = 'none';
+    mainScreen.style.display = 'none';
+    lockScreen.style.display = 'flex';
+
+    // Если есть биометрия — предлагаем сразу
+    if (window.PublicKeyCredential && await isBiometricAvailable()) {
+      unlockBiometricBtn.style.display = 'block';
+    } else {
+      unlockBiometricBtn.style.display = 'none';
+    }
+  }
+
+  // Проверка биометрии
+  async function isBiometricAvailable() {
+    try {
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      return available;
+    } catch {
+      return false;
+    }
+  }
+
+  // Разблокировка по биометрии
+  unlockBiometricBtn.addEventListener('click', async () => {
+    try {
+      const credential = await navigator.credentials.get({
+        publicKey: {
+          challenge: new Uint8Array(32),
+          rpId: window.location.hostname,
+          userVerification: 'required',
+          timeout: 60000
+        }
+      });
+      if (credential) {
+        unlockApp();
+      }
+    } catch (err) {
+      // Биометрия не сработала — показываем PIN
+      console.log('Биометрия недоступна, используйте PIN');
+    }
+  });
+
+  // Разблокировка по PIN
+  unlockPinBtn.addEventListener('click', () => {
+    const pin = prompt('Введите PIN-код (по умолчанию: 0000)');
+    if (pin === '0000' || pin === localStorage.getItem('user_pin')) {
+      unlockApp();
+    } else {
+      alert('Неверный PIN-код');
+    }
+  });
+
+  function unlockApp() {
+    lockScreen.style.display = 'none';
+    mainScreen.style.display = 'block';
+    if (!initialized) {
+      initialized = true;
+      initNavigation();
+      initSavings();
+      initCar();
+      initNotes();
+    }
+  }
+
+  // Выход из аккаунта
+  lockLogoutBtn.addEventListener('click', async () => {
+    clearSession();
+    await auth.signOut();
+    lockScreen.style.display = 'none';
+    authScreen.style.display = 'flex';
+  });
 
   // Вход
   loginBtn.addEventListener('click', async () => {
@@ -64,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       await auth.signInWithEmailAndPassword(email, pass);
+      saveSession(email);
     } catch (err) {
       if (err.code === 'auth/user-not-found') {
         showError('Пользователь не найден');
@@ -94,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       await auth.createUserWithEmailAndPassword(email, pass);
+      saveSession(email);
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
         showError('Этот email уже используется');
@@ -110,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') loginBtn.click();
   });
 
-  // Выход
+  // Выход из основного экрана
   logoutBtn.addEventListener('click', async () => {
     await auth.signOut();
   });
@@ -118,20 +233,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Следим за авторизацией
   auth.onAuthStateChanged(user => {
     if (user) {
-      authScreen.style.display = 'none';
-      mainScreen.style.display = 'block';
-
-      if (!initialized) {
-        initialized = true;
-        initNavigation();
-        initSavings();
-        initCar();
-        initNotes();
+      const sessionActive = localStorage.getItem('session_active');
+      
+      if (sessionActive === 'true') {
+        // Сессия активна — показываем экран блокировки
+        showLockScreen();
+      } else {
+        // Новая сессия — показываем блокировку
+        saveSession(user.email || '');
+        showLockScreen();
       }
     } else {
       authScreen.style.display = 'flex';
+      lockScreen.style.display = 'none';
       mainScreen.style.display = 'none';
-      emailInput.value = '';
+      emailInput.value = savedEmail;
       passInput.value = '';
       authError.style.display = 'none';
       initialized = false;
