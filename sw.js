@@ -2,12 +2,14 @@ const CACHE_NAME = 'organizer-v1';
 const ASSETS = [
   '/',
   '/index.html',
-  '/styles/main.css',
-  '/js/app.js',
-  '/js/firebase-config.js',
-  '/js/db.js',
-  '/js/navigation.js',
-  '/js/savings.js'
+  '/main.css',
+  '/app.js',
+  '/firebase-config.js',
+  '/db.js',
+  '/navigation.js',
+  '/savings.js',
+  '/car.js',
+  '/notes.js'
 ];
 
 self.addEventListener('install', event => {
