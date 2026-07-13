@@ -33,17 +33,29 @@ async function deleteSavingGoal(id) {
 }
 
 // --- Авто ---
-async function getCarData() {
+async function getCars() {
   const uid = await getUserId();
-  const doc = await db.collection('users')
-    .doc(uid).collection('car').doc('maintenance').get();
-  return doc.exists ? doc.data() : null;
+  const snapshot = await db.collection('users')
+    .doc(uid).collection('cars').get();
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
-async function saveCarData(data) {
+async function addCar(car) {
   const uid = await getUserId();
   return db.collection('users')
-    .doc(uid).collection('car').doc('maintenance').set(data, { merge: true });
+    .doc(uid).collection('cars').add(car);
+}
+
+async function updateCar(id, data) {
+  const uid = await getUserId();
+  return db.collection('users')
+    .doc(uid).collection('cars').doc(id).update(data);
+}
+
+async function deleteCar(id) {
+  const uid = await getUserId();
+  return db.collection('users')
+    .doc(uid).collection('cars').doc(id).delete();
 }
 
 // --- Заметки ---
