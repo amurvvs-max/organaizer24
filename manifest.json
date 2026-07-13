@@ -1,7 +1,7 @@
 {
   "name": "Мой Органайзер",
   "short_name": "Органайзер",
-  "start_url": "/",
+  "start_url": "/organaizer24/",
   "display": "standalone",
   "background_color": "#0f0f1a",
   "theme_color": "#0f0f1a",
